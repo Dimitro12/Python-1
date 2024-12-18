@@ -1,6 +1,6 @@
 class Solution:
     
-    file = open('square.txt')
+    file = open('number5.txt')
 
     def __init__(self):
         self.vals = []
