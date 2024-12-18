@@ -1,134 +1,148 @@
-class polymonial:
-    def init(self, koef):
-        while koef and koef[-1] == 0:
-            koef.pop()
-        self.koef = koef
-
-    def str(self):
-        # Вывод многочлена в консоль
-        output = []
-        for power, coef in enumerate(self.koef):
-            if coef != 0:
-                term = f"{coef}" if power == 0 else f"{coef}*x^{power}"
-                output.append(term)
-        print(" + ".join(reversed(output)) if output else "0")
-
-    def print_polynomial(self):
-        # Вывод многочлена в консоль
-        output = []
-        for power, coef in enumerate(self.koef):
-            if coef != 0:
-                term = f"{coef}" if power == 0 else f"{coef}*x^{power}"
-                output.append(term)
-        print(" + ".join(reversed(output)) if output else "0")
-
-    def add(self,other):
-        number_of_zeros = abs(len(self.koef)-len(other.koef))
-        max_len = max(len(self.koef),len(other.koef))
-        if len(self.koef) > len(other.koef):
-           other.koef = other.koef + [0] * number_of_zeros
-        else:
-            self.koef = self.koef + [0] * number_of_zeros
-
-        res = []
-        for i in range(max_len):
-            res.append(self.koef[i]+other.koef[i])
-        return polymonial(res)
-
-    def at_point(self,x):
-        res = 0
-        for i in range(len(self.koef)):
-            p = self.koef[i] * x ** i
-            res += p
-        print(res)
-
-    def derivative(self):
-        new_koef = self.koef
-        new_koef.pop(0)
-        for i in range(len(new_koef)-1,-1,-1):
-            new_koef[i] = (i+1) * new_koef[i]
-        return polymonial(new_koef)
-
-    def write_to_file(self, filename):
-        with open(filename, 'w') as f:
-            output = []
-            for power, coef in enumerate(self.koef):
-                if coef != 0:
-                    term = f"{coef}" if power == 0 else f"{coef}*x^{power}"
-                    output.append(term)
-            record = " + ".join(reversed(output)) if output else "0"
-            f.write(record)
+class Polynomial:
+    def __init__(self, coefficients: List[Fraction]):
+        """Инициализирует многочлен по списку коэффициентов."""
+      
+        while coefficients and coefficients[0] == 0:
+            coefficients.pop(0)
+        self.coefficients = coefficients if coefficients else [0] #Обработка пустого списка
 
 
+    def __repr__(self):
+        """Представление многочлена в виде строки."""
+        terms = []
+        for i, coeff in enumerate(self.coefficients):
+            if coeff == 0:
+                continue
+            term = str(coeff)
+            if i > 0:
+                term += "x"
+                if i > 1:
+                    term += f"^{i}"
+            terms.append(term)
+        return " + ".join(terms) or "0"
 
-print("Добро пожаловать в систему работы с многочленами!")
-polynomials = []
-flag = True
 
-print("Создадим 2 многочлена")
-coef1 = []
-coef1 = list(map(int, input("Введите коэффициенты через пробел: ").split()))
-coef2 = []
-coef2 = list(map(int, input("Введите коэффициенты через пробел: ").split()))
-p1 = polymonial(coef1)
-p2 = polymonial(coef2)
-print("Многочлены созданы.")
+    def __add__(self, other: "Polynomial") -> "Polynomial":
+        """Сложение двух многочленов."""
+        max_len = max(len(self.coefficients), len(other.coefficients))
+        padded_self = self.coefficients + [0] * (max_len - len(self.coefficients))
+        padded_other = other.coefficients + [0] * (max_len - len(other.coefficients))
+        return Polynomial([a + b for a, b in zip(padded_self, padded_other)])
+
+    def __sub__(self, other: "Polynomial") -> "Polynomial":
+        """Вычитание двух многочленов."""
+        max_len = max(len(self.coefficients), len(other.coefficients))
+        padded_self = self.coefficients + [0] * (max_len - len(self.coefficients))
+        padded_other = other.coefficients + [0] * (max_len - len(other.coefficients))
+        return Polynomial([a - b for a, b in zip(padded_self, padded_other)])
 
 
-while flag:
-    print("\nМеню:")
-    print("1. Создать 2 многочлена")
-    print("2. Вывести многочлены")
-    print("3. Вычислить значение многочленов в точке")
-    print("4. Найти производную многочленов")
-    print("5. Сложить два многочлена")
-    print("6. Записать многочлены в файл")
-    print("7. Удалить многочлены")
-    print("7. Выход")
+    def evaluate(self, x: float) -> float:
+        """Вычисляет значение многочлена в точке x."""
+        result = 0
+        for i, coeff in enumerate(self.coefficients):
+            result += coeff * (x**i)
+        return result
 
-    choice = input("Выберите действие (1-7): ")
+    def derivative(self) -> "Polynomial":
+        """Вычисляет производную многочлена."""
+        if not self.coefficients:
+            return Polynomial([0])
+        derived_coeffs = [i * c for i, c in enumerate(self.coefficients[1:])]
+        return Polynomial(derived_coeffs)
 
-    match choice:
-        case '1':
-            del p1
-            del p2
-            coef1 = list(map(int, input("Введите коэффициенты через пробел: ").split()))
-            coef2 = list(map(int, input("Введите коэффициенты через пробел: ").split()))
-            p1 = polymonial(coef1)
-            p2 = polymonial(coef2)
-            print("Многочлены созданы.")
+    def write_to_file(self, filename: str):
+        """Записывает многочлен в файл."""
+        with open(filename, "w") as f:
+            f.write(str(self))
 
-        case '2':
-            print('Многочлен 1:')
-            p1.print_polynomial()
-            print('Многочлен 2:')
-            p2.print_polynomial()
+    def find_integer_roots(self) -> List[int]:
+        """Находит целые корни многочлена (если коэффициенты - дроби)."""
+        if not all(isinstance(c, Fraction) for c in self.coefficients):
+            raise ValueError("Коэффициенты должны быть дробями для поиска целых корней.")
 
-        case '3':
-            x = input('Введите точку')
-            print('Многочлен 1:')
-            p1.at_point(x)
-            print('Многочлен 2:')
-            p2.at_point(x)
+        roots = []
+        for i in range(-10, 11): 
+          if self.evaluate(i) == 0:
+            roots.append(i)
+        return roots
 
-        case '4':
-            print('Многочлен 1:')
-            p1.derivative()
-            p1.print_polynomial()
-            print('Многочлен 2:')
-            p2.derivative()
-            p2.print_polynomial()
+def polynomial_gcd(p1: Polynomial, p2: Polynomial) -> Polynomial:
+    """Находит наибольший общий делитель двух многочленов (алгоритм Евклида)."""
+    while p2.coefficients != [0]:
+        p1, p2 = p2, p1 % p2 # Используем оператор % для многочленов 
+    return p1
 
-        case '5':
-            summa = p1+p2
-            print(f'Сумма многочленов: {summa}')
+def polynomial_mod(p1: Polynomial, p2: Polynomial) -> Polynomial:
+    """Модульное деление многочленов (остаток от деления)."""
+    if not p2.coefficients or p2.coefficients == [0]:
+      raise ZeroDivisionError("Деление на ноль")
 
-        case '6':
-            p1.write_to_file('p1.txt')
-            print('Файл создан')
-            p2.write_to_file('p2.txt')
-            print('Файл создан')
+    if len(p1.coefficients) < len(p2.coefficients):
+        return p1
 
-        case '7':
-            print("Выход из программы.")
-            flag = False
+    divisor_degree = len(p2.coefficients) -1
+    dividend_degree = len(p1.coefficients) -1
+
+    quotient = [0]*(dividend_degree - divisor_degree +1)
+
+    remainder = list(p1.coefficients)
+
+    for i in range(dividend_degree, divisor_degree-1, -1):
+        quotient_coeff = remainder[i]/p2.coefficients[-1]
+        quotient[i-divisor_degree] = quotient_coeff
+
+        for j in range(len(p2.coefficients)):
+            remainder[i-j] -= quotient_coeff * p2.coefficients[len(p2.coefficients)-1-j]
+
+    return Polynomial(remainder[:divisor_degree])
+    
+
+
+Polynomial.__mod__ = polynomial_mod
+
+
+def input_coefficients() -> List[Fraction]:
+    """Ввод коэффициентов многочлена от пользователя."""
+    while True:
+        try:
+            coeffs_str = input("Введите коэффициенты через пробел (например, 1/2 -1 1): ")
+            coeffs = [Fraction(c) for c in coeffs_str.split()]
+            return coeffs
+        except ValueError:
+            print("Неверный формат ввода. Пожалуйста, используйте дроби через пробел.")
+
+
+if __name__ == "__main__":
+    print("Ввод первого многочлена:")
+    coeffs1 = input_coefficients()
+    p1 = Polynomial(coeffs1)
+
+    print("\nВвод второго многочлена:")
+    coeffs2 = input_coefficients()
+    p2 = Polynomial(coeffs2)
+
+    print("\np1:", p1)
+    print("p2:", p2)
+
+    print("\np1 + p2:", p1 + p2)
+
+    x_val = float(input("\nВведите значение x для вычисления p1(x): "))
+    print(f"p1({x_val}) = {p1.evaluate(x_val)}")
+
+    print("\nПроизводная p1:", p1.derivative())
+
+    p1.write_to_file("polynomial1.txt")
+    print("\nМногочлен p1 записан в файл polynomial1.txt")
+
+    try:
+        integer_roots = p1.find_integer_roots()
+        print("\nЦелые корни p1:", integer_roots)
+    except ValueError as e:
+        print(e)
+
+    try:
+        gcd_poly = polynomial_gcd(p1, p2)
+        print("\nНаибольший общий делитель p1 и p2:", gcd_poly)
+    except ZeroDivisionError as e:
+      print(f"Ошибка: {e}")
