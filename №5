@@ -1,90 +1,106 @@
+class Line:
+    def __init__(self, x1, y1, x2, y2, line_number):
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
+        self.line_number = line_number
+
+        if x1 == x2:  
+            self.is_vertical = True
+            self.slope = float('inf')
+            self.intercept = x1
+        else:
+            self.is_vertical = False
+            self.slope = (y2 - y1) / (x2 - x1)
+            self.intercept = y1 - self.slope * x1
+
+    def intersection(self, other_line):
+        if self.is_vertical and other_line.is_vertical:
+            return None  
+
+        if self.is_vertical:
+            x = self.intercept
+            y = other_line.slope * x + other_line.intercept
+            return x,y
+        elif other_line.is_vertical:
+            x = other_line.intercept
+            y = self.slope * x + self.intercept
+            return x,y
+        else:
+            if self.slope == other_line.slope:
+                return None 
+            x = (other_line.intercept - self.intercept) / (self.slope - other_line.slope)
+            y = self.slope * x + self.intercept
+            return x, y
+
+    def __str__(self):
+      return f"Line {self.line_number}: ({self.x1}, {self.y1}) - ({self.x2}, {self.y2})"
+
+
 class Solution:
-    
-    file = open('number5.txt', 'w+')
+    def __init__(self, filename):
+        self.lines = self.read_lines_from_file(filename)
 
-    def __init__(self):
-        self.vals = []
-        self.number = None
-        
-        vals = self.file.readline().split()
+    def read_lines_from_file(self, filename):
+        try:
+            with open(filename, 'r') as f:
+                lines = []
+                for i, line in enumerate(f):
+                    try:
+                        x1, y1, x2, y2, num = map(float, line.strip().split())
+                        lines.append(Line(x1,y1,x2,y2, int(num)))
+                    except ValueError:
+                        print(f"Error parsing line {i+1} in {filename}")
+                return lines
 
-        if len(vals) > 1:
-            self.number = int(vals[len(vals)-1])
-            vals.pop()
-        for i in range(0, len(vals)):
-            vals[i] = float(vals[i])
-        if vals[0] == vals[2] and vals[1] == vals[3]:
-            print('[*] ERR, initialization is incorrect. Data in number5.txt was wrong')
-            return 0
+        except FileNotFoundError:
+            print(f"Error: File '{filename}' not found.")
+            return []
+
+    def calculate_area_ratio(self):
+      ratios = {}
+      for line in self.lines:
+        ratios[line.line_number] = (line.x1 + line.x2)/2
+      return ratios
+
+    def find_intersections(self):
+        intersections = {}
+        for i, line1 in enumerate(self.lines):
+            for j, line2 in enumerate(self.lines):
+                if i < j:  
+                    point = line1.intersection(line2)
+                    if point:
+                        if 0 <= point[0] <= 1 and 0 <= point[1] <= 1:
+                            intersections[(line1.line_number, line2.line_number)] = point
+        return intersections
+
+    def find_triple_intersections(self):
+        intersections = self.find_intersections()
+        triple_intersections = {}
+        for point in intersections.values():
+            count = 0
+            for key, value in intersections.items():
+              if value == point:
+                count +=1
+            if count >=3:
+              lines_involved = [k for k, v in intersections.items() if v == point]
+              triple_intersections[tuple(point)] = lines_involved
+
+        if triple_intersections:
+            return triple_intersections
         else:
-            self.vals = vals
-    
-    def rate_space(self):
-        if self.vals[0] == 0:
-            if self.vals[2] < 1:
-                space = 0.5*(1-self.vals[1])*self.vals[2]
-                return space/(1-space)
-            space_1 = 0.5*(2 - self.vals[1] - self.vals[3])
-            space_2 = 0.5*(self.vals[1]+self.vals[3])
-            return min(space_1, space_2)/max(space_1, space_2)
-        elif self.vals[1] == 0:
-            if self.vals[3] < 1:
-                space = 0.5*(1-self.vals[0])*self.vals[3]
-                return space/(1-space)
-            space_1 = 0.5*(vals[0] + vals[2])
-            space_2 = 0.5*(2 - self.vals[0] - self.vals[2])
-            return min(space_1, space_2)/max(space_1, space_2)
-        return 0
-
-    def intersections(self, objects):
-        inter = {}
-        if self in objects:
-            print('[*] ERR, division by zero')
-            return 0
-        else:
-            for i in range(0, len(objects)):
-                if (objects[i].vals[1] - objects[i].vals[3])/(objects[i].vals[0] - objects[i].vals[2]) == (self.vals[1] - self.vals[3])/(self.vals[0] - self.vals[2]):
-                    pass
-                else:
-                    x = ((objects[i].vals[1] - objects[i].vals[3])/(objects[i].vals[0] - objects[i].vals[2]) * objects[i].vals[0] - (self.vals[1] - self.vals[3])/(self.vals[0] - self.vals[2]) * self.vals[0] + self.vals[1] - objects[i].vals[1])/((objects[i].vals[1] - objects[i].vals[3])/(objects[i].vals[0] - objects[i].vals[2]) - (self.vals[1] - self.vals[3])/(self.vals[0] - self.vals[2]))
-                    y = (self.vals[1] - self.vals[3])/(self.vals[0] - self.vals[2]) * (x - self.vals[0]) + self.vals[1]
-                    if x<=1 and y<=1:
-                        xy = [x, y]
-                        inter[str(self.number) + str(objects[i].number)] = xy
-            return inter
-    
-    def triple_crossing(self, objects):
-        ans = {}
-        inter = self.intersections(objects)
-        for i in inter:
-            temp = inter[i]
-            for j in inter:
-                if inter[j] == inter[i] and i != j and not(inter[j] in ans.values()):
-                    ans[i+j[1:2]] = inter[j]
-        return ans
-
-    def get_info(self):
-        print(self.vals)
-        print(self.number)
+            print("Точек пересечения минимум трёх отрезков не найдено.")
+            return {}
 
 
+solution = Solution("number5.txt")  
 
-line_1 = Solution()
-line_2 = Solution()
-line_3 = Solution()
+area_ratios = solution.calculate_area_ratio()
+print("Соотношения площадей:", area_ratios)
 
-lines = [line_2, line_3]
-print(line_1.intersections(lines))
+all_intersections = solution.find_intersections()
+print("Все точки пересечения:", all_intersections)
 
-print(line_1.triple_crossing(lines))
-
-line_4 = Solution()
-line_5 = Solution()
-line_6 = Solution()
-line_7 = Solution()
-
-lines = [line_5, line_6, line_7]
-
-print(line_4.intersections(lines))
-print(line_5.intersections([line_4, line_7, line_6]))
-print(line_4.triple_crossing(lines))
+triple_intersections = solution.find_triple_intersections()
+print("Точки пересечения минимум трёх отрезков:", triple_intersections)
