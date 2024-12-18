@@ -1,6 +1,6 @@
 class Solution:
     
-    file = open('number5.txt')
+    file = open('number5.txt', 'w+')
 
     def __init__(self):
         self.vals = []
@@ -14,7 +14,7 @@ class Solution:
         for i in range(0, len(vals)):
             vals[i] = float(vals[i])
         if vals[0] == vals[2] and vals[1] == vals[3]:
-            print('[*] ERR, initialization is incorrect. Data in number.txt was wrong')
+            print('[*] ERR, initialization is incorrect. Data in number5.txt was wrong')
             return 0
         else:
             self.vals = vals
